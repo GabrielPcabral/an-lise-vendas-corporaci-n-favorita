@@ -53,3 +53,4 @@ SELECT
      FROM train),'N') AS 'Balanço de vendas'
 ```
 
+<img width="637" height="62" alt="image" src="https://github.com/user-attachments/assets/6d79e272-b514-4656-a5b2-3c7310fd08b3" />
