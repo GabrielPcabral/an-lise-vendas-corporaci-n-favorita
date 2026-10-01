@@ -18,7 +18,7 @@ Analisar dados de vendas da rede Corporación Favorita utilizando SQL Server e P
 
 ## Perguntas de negócio
 
-1. Qual a quantidade vendida, devolvida e o balanço de vendas totais.
+1. Qual a quantidade vendida, devolvida e o balanço de vendas totais ?
 2. Quais lojas, cidade e estado apresentam maior volume de vendas?
 3. Quais categorias possuem maior demanda?
 4. Promoções aumentam as vendas?
@@ -37,5 +37,19 @@ Analisar dados de vendas da rede Corporación Favorita utilizando SQL Server e P
 - DATEPART
 - funções de agregação
 
+## Análise
 
+### Qual a quantidade vendida, devolvida e o balanço de vendas totais.
+
+``` sql
+SELECT
+    FORMAT(ABS((SELECT SUM(unit_sales)
+     FROM train
+     WHERE unit_sales < 0)), 'N') AS 'Quantidade devolvida',
+    FORMAT((SELECT SUM(unit_sales)
+     FROM train
+     WHERE unit_sales > 0), 'N') AS 'Quantidade vendida' ,
+    FORMAT((SELECT SUM(unit_sales)
+     FROM train),'N') AS 'Balanço de vendas'
+```
 
