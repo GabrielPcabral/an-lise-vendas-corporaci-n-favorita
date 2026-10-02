@@ -1,8 +1,16 @@
 # Corporación Favorita — Sales Analysis
+>Projeto de análise exploratória de vendas da Corporación Favorita, desenvolvido com SQL Server e Power BI, com foco em demanda, devoluções, desempenho de lojas, promoções e comportamento temporal das vendas.
 
 ## Objetivo
-
-Analisar dados de vendas da rede Corporación Favorita utilizando SQL Server e Power BI.
+Analisar o comportamento das vendas da rede Corporación Favorita e identificar padrões relacionados a:
+- volume de vendas e devoluções;
+- desempenho de lojas, cidades e estados;
+- demanda por categoria e produto;
+- taxa de devolução;
+- média diária de vendas;
+- comportamento de itens em promoção;
+- sazonalidade mensal e anual;
+- comportamento das vendas por dia da semana.
 
 ## Tecnologias
 
@@ -15,6 +23,12 @@ Analisar dados de vendas da rede Corporación Favorita utilizando SQL Server e P
 ## Base de dados
 
 [Favorita Grocery Sales Forecasting — Kaggle](https://www.kaggle.com/competitions/favorita-grocery-sales-forecasting/data)
+
+Entre as principais tabelas utilizadas nas consultas estão:
+- train — registros de vendas por data, loja e produto;
+- stores — informações sobre as lojas, como cidade e estado;
+- items — informações sobre os produtos e suas categorias.
+
 
 ## Perguntas de negócio
 
@@ -38,22 +52,28 @@ Analisar dados de vendas da rede Corporación Favorita utilizando SQL Server e P
 - funções de agregação
 
 ## Análise
-Primeiramente para a análise foi necessário entender o banco de dados, e a base de dados treino (onde se encontra mais de 115 milhões de registros) apresentava unit_sales com valores negativos (o que representavam a devolução daquele produto. Logo para análisar apenas as vendas e não o balanço de vendas (venda - devolução) foram criado duas VIEWS que filtraram as vendas e as devoluções.
-```sql
-CREATE VIEW vwVENDAS AS (
-SELECT
-*
-FROM
-train
-WHERE unit_sales > 0)
 
-CREATE VIEW vwDEVOLUCOES AS (
-SELECT
-*
-FROM
-train
-WHERE unit_sales > 0)
+### Preparação da base de dados
+
+Antes das análises, foi necessário interpretar corretamente a coluna unit_sales.
+- unit_sales > 0 → venda;
+- unit_sales < 0 → devolução.
+Para facilitar as consultas seguintes, foram criadas duas views:
+
+``` sql
+CREATE VIEW vwVENDAS AS
+SELECT *
+FROM train
+WHERE unit_sales > 0
+
+
+CREATE VIEW vwDEVOLUCOES AS
+SELECT *
+FROM train
+WHERE unit_sales < 0
 ```
+Essa separação permite analisar vendas e devoluções de forma independente, evitando que os valores negativos sejam interpretados incorretamente como redução de demanda em análises específicas.
+
 
 ### Qual a quantidade vendida, devolvida e o balanço de vendas totais.
 
@@ -68,7 +88,8 @@ SELECT
 ```
 
 <img width="637" height="62" alt="image" src="https://github.com/user-attachments/assets/6d79e272-b514-4656-a5b2-3c7310fd08b3" />
-Nessa análise é possível também utilizar o filtro WHERE BETWEEN para filtrar períodos de datas específicos.
+
+O indicador de balanço de vendas representa o resultado líquido entre vendas e devoluções. A mesma lógica pode ser combinada com filtros de data para analisar períodos específicos.
 
 
 ###  Quais lojas, cidade e estado apresentam maior volume de vendas?
@@ -114,7 +135,7 @@ ORDER BY SUM(T.unit_sales) DESC
 ```
 <img width="366" height="347" alt="image" src="https://github.com/user-attachments/assets/a7ed5a3c-c994-4f59-96a7-ddeb0e853596" />
 
-Com essa análise é possível observar que as lojas que apresentam maior quantidade de vendas são as lojas que estão localizadas na cidade de QUITO e no estado de Pichincha onde há também o maiuor número de lojas.
+Os resultados mostram concentração de vendas em Quito e no estado de Pichincha. Como essa região também possui maior presença de lojas, o volume total deve ser interpretado em conjunto com a quantidade de unidades existentes em cada localidade.
 
 ### Quais categorias possuem maior demanda?
 ``` sql
@@ -128,6 +149,8 @@ GROUP BY I.family
 ORDER BY SUM(T.unit_sales) DESC
 ```
 <img width="296" height="340" alt="image" src="https://github.com/user-attachments/assets/3f3f99f6-ea38-4c49-acda-765d76ae640e" />
+
+Essa análise permite identificar as categorias com maior demanda acumulada e pode servir de ponto de partida para análises de estoque, sortimento e comportamento de consumo
 
 ### Quais produtos apresentam maior taxa de devolução? 
 ``` sql
@@ -170,7 +193,8 @@ GROUP BY item_nbr
 ORDER BY [Taxa de devolução] DESC
 ```
 <img width="529" height="264" alt="image" src="https://github.com/user-attachments/assets/9065e98f-1623-4720-ad66-a92dbf40d976" />
-O resultado dessa análise é interessante uma vez que dois produtos com grande quantidade de vendas (1 milhão e 173 mil e  94 mil vendas) apresentam tambem uma alta taxa de devolução, podendo gerar uma análise para entender o motivo de tal produto ter uma taxa de devolução maior que 1%.
+
+A análise identificou produtos com volume relevante de vendas e taxa de devolução superior a 1%. Esses casos merecem investigação adicional, pois uma taxa elevada pode indicar um comportamento específico do produto que não aparece apenas observando o volume total vendido.
 
 ### Quais produtos e lojas apresentam mais vendas por dia ?
 ``` sql
@@ -200,9 +224,12 @@ ORDER BY SUM(unit_sales)/@qtd_dias DESC
 <img width="307" height="343" alt="image" src="https://github.com/user-attachments/assets/db67d2a2-05ac-4891-aa6d-f34041017464" />
 <img width="410" height="340" alt="image" src="https://github.com/user-attachments/assets/01eb0542-090d-4fa6-b80e-ca34090bbc36" />
 
+**Interpretação**
+Esse indicador representa a quantidade média vendida por dia considerando todo o período do dataset. Ele não representa necessariamente a média apenas nos dias em que cada produto ou loja esteve ativo.
+Por isso, produtos introduzidos posteriormente ou lojas que não operaram durante todo o período podem apresentar médias menores simplesmente por possuírem menos tempo de atividade.
 
-Para essa análise foi necessário declarar a variável @qtd_dias de forma a obter a quantidade de dias que possuem dentro do DATASET para conseguir obter a média de vendas durante todo o período, é importante ressaltar que a análise não considerou o tempo de atividade de uma loja (desconsiderar lojas com funcionamento menor do que o período) e nem dos produtos. 
-Essa análise de demanda por produtos é interessante pois podemos analisar quais são os produtos com maior vendas por dia o que pode ser aplicado para previsibilidade de vendas e de estoque, o que é extremamente interessante para as lojas.
+
+Mesmo com essa limitação, o indicador é útil para identificar itens e lojas com maior demanda média durante o período analisado e pode servir como base para estudos posteriores de previsão de demanda e planejamento de estoque.
 
 
 ###  Promoções aumentam as vendas?
@@ -224,7 +251,9 @@ GROUP BY onpromotion
 ```
 <img width="685" height="102" alt="image" src="https://github.com/user-attachments/assets/d8e2bf20-651a-453f-a75b-b6c731cf7766" />
 
-Como podemos analisar nos resultados obtidos, a maior parte dos registros apresentados ocorreram sem promoção ou sem registro, por esse motivo temos que a quantidade vendida também é maior do que quando ocorreu em promoção. Porém como podemos analisar a média de vendas, temos um aumento de aproximadamente 66% na quantidade vendida quando em promoção. Para investigar melhor o efeito das promoções, análises posteriores podem comparar o mesmo produto em períodos com e sem promoção.
+A maior parte dos registros ocorreu sem promoção ou sem informação de promoção, o que explica o maior volume total vendido nesses grupos.
+Entretanto, nos resultados obtidos, a média de unit_sales por registro foi aproximadamente 66% maior nos registros em promoção.
+Esse resultado mostra uma associação entre promoção e maior quantidade vendida por registro, mas não permite concluir, sozinho, que a promoção causou o aumento das vendas. Uma análise mais robusta pode comparar o mesmo produto em períodos com e sem promoção, controlando diferenças de demanda entre os itens.
 
 ##Quais meses/anos apresentam maior quantidade de vendas ?
 ``` sql
@@ -243,6 +272,7 @@ ORDER BY [Quantidade vendida] DESC
 ```
 <img width="277" height="342" alt="image" src="https://github.com/user-attachments/assets/03dd26b2-560f-4f0a-ba81-3841ad4a96e0" />
 
+O agrupamento por mês e ano permite identificar períodos de maior volume de vendas e é um primeiro passo para investigar sazonalidade.
 
 8. Qual a quantidade média vendida em cada dia da semana ?
 
@@ -268,3 +298,17 @@ ORDER BY [Média de vendas] DESC
 
 <img width="280" height="196" alt="image" src="https://github.com/user-attachments/assets/70b14463-1d8b-4118-934d-a5cfea2eb111" />
 
+Essa abordagem evita calcular simplesmente a média das linhas individuais. Primeiro, todas as vendas de uma mesma data são consolidadas e, somente depois, é calculada a média dos totais diários para cada dia da semana.
+
+
+
+## Principais aprendizados
+O projeto permitiu aplicar SQL a uma base com grande volume de registros e transformar dados transacionais em indicadores de negócio. Entre os principais pontos trabalhados estão:
+- separação entre vendas e devoluções;
+- uso de joins para enriquecer a análise com informações de lojas e produtos;
+- criação de indicadores agregados por produto, loja, localidade e período;
+- cálculo de taxa de devolução;
+- construção de métricas de demanda média diária;
+- análise descritiva do comportamento de vendas em promoção;
+- análise temporal por mês, ano e dia da semana;
+- interpretação dos resultados considerando as limitações das métricas utilizadas.
