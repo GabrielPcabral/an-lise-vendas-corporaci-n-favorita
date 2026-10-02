@@ -38,19 +38,43 @@ Analisar dados de vendas da rede Corporación Favorita utilizando SQL Server e P
 - funções de agregação
 
 ## Análise
+Primeiramente para a análise foi necessário entender o banco de dados, e a base de dados treino (onde se encontra mais de 115 milhões de registros) apresentava unit_sales com valores negativos (o que representavam a devolução daquele produto. Logo para análisar apenas as vendas e não o balanço de vendas (venda - devolução) foram criado duas VIEWS que filtraram as vendas e as devoluções.
+```sql
+CREATE VIEW vwVENDAS AS (
+SELECT
+*
+FROM
+train
+WHERE unit_sales > 0)
+
+CREATE VIEW vwDEVOLUCOES AS (
+SELECT
+*
+FROM
+train
+WHERE unit_sales > 0)
+```
 
 ### Qual a quantidade vendida, devolvida e o balanço de vendas totais.
 
 ``` sql
 SELECT
     FORMAT(ABS((SELECT SUM(unit_sales)
-     FROM train
-     WHERE unit_sales < 0)), 'N') AS 'Quantidade devolvida',
+     FROM vwDEVOLUCOES))), 'N') AS 'Quantidade devolvida',
     FORMAT((SELECT SUM(unit_sales)
-     FROM train
-     WHERE unit_sales > 0), 'N') AS 'Quantidade vendida' ,
+     FROM vwVENDAS), 'N') AS 'Quantidade vendida' ,
     FORMAT((SELECT SUM(unit_sales)
      FROM train),'N') AS 'Balanço de vendas'
 ```
 
 <img width="637" height="62" alt="image" src="https://github.com/user-attachments/assets/6d79e272-b514-4656-a5b2-3c7310fd08b3" />
+Nessa análise é po
+
+
+##  Quais lojas, cidade e estado apresentam maior volume de vendas?
+3. Quais categorias possuem maior demanda?
+4. Promoções aumentam as vendas?
+5. Quais produtos apresentam maior taxa de devolução?
+6. Quais produtos e lojas apresentam mais vendas por dia ?
+7. Quais meses/anos apresentam maior quantidade de vendas ?
+8. Qual a quantidade média vendida em cada dia da semana ?
