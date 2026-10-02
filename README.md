@@ -252,7 +252,7 @@ A maior parte dos registros ocorreu sem promoção ou sem informação de promo�
 Entretanto, nos resultados obtidos, a média de unit_sales por registro foi aproximadamente 66% maior nos registros em promoção.
 Esse resultado mostra uma associação entre promoção e maior quantidade vendida por registro, mas não permite concluir, sozinho, que a promoção causou o aumento das vendas. Uma análise mais robusta pode comparar o mesmo produto em períodos com e sem promoção, controlando diferenças de demanda entre os itens.
 
-##Quais meses/anos apresentam maior quantidade de vendas ?
+### Quais meses/anos apresentam maior quantidade de vendas ?
 ``` sql
 SELECT
     YEAR(date) AS Ano,
