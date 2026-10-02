@@ -15,10 +15,7 @@ Analisar o comportamento das vendas da rede Corporación Favorita e identificar 
 ## Tecnologias
 
 - SQL Server
-- SQL Server Management Studio
-- Python
-- Pandas
-- Power BI
+
 
 ## Base de dados
 
