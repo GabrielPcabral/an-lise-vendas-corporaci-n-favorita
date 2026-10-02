@@ -132,18 +132,18 @@ ORDER BY SUM(T.unit_sales) DESC
 ### Quais produtos apresentam maior taxa de devolução? 
 ``` sql
 SELECT TOP 10
-    item_nbr,
+    item_nbr AS Item,
     SUM(CASE
             WHEN unit_sales > 0 THEN unit_sales
             ELSE 0
         END
-        ) AS quantidade_vendida,
+        ) AS 'Quantidade vendida',
 
     SUM(CASE
             WHEN unit_sales < 0 THEN unit_sales
             ELSE 0
         END
-        ) AS quantidade_devolvida,
+        ) AS 'Quantidade devolvida',
 
     FORMAT(
         ABS(
@@ -163,13 +163,76 @@ SELECT TOP 10
                             END)
                         )
                 ,0)
-    ,'P') AS taxa_devolução
+    ,'P') AS 'Taxa de devolução'
 FROM
     train
 GROUP BY item_nbr
-ORDER BY taxa_devolução DESC
+ORDER BY [Taxa de devolução] DESC
 ```
-6. Quais produtos e lojas apresentam mais vendas por dia ?
-4. Promoções aumentam as vendas?
+<img width="529" height="264" alt="image" src="https://github.com/user-attachments/assets/9065e98f-1623-4720-ad66-a92dbf40d976" />
+O resultado dessa análise é interessante uma vez que dois produtos com grande quantidade de vendas (1 milhão e 173 mil e  94 mil vendas) apresentam tambem uma alta taxa de devolução, podendo gerar uma análise para entender o motivo de tal produto ter uma taxa de devolução maior que 1%.
+
+### Quais produtos e lojas apresentam mais vendas por dia ?
+``` sql
+DECLARE @qtd_dias INT;
+
+SET @qtd_dias = (
+    SELECT COUNT(DISTINCT date)
+    FROM train
+);
+
+SELECT TOP 200
+   item_nbr,
+   ROUND((SUM(unit_sales)/@qtd_dias),2) AS 'Quantidade vendida por dias' 
+FROM vwDEVOLUCOES
+GROUP BY item_nbr
+ORDER BY SUM(unit_sales)/@qtd_dias DESC 
+
+
+SELECT
+   store_nbr,
+   ROUND((SUM(unit_sales)/@qtd_dias),2) AS 'Quantidade vendida por dias',
+   ROUND(SUM(unit_sales),2) AS 'Vendas totais'
+FROM vwVENDAS
+GROUP BY store_nbr
+ORDER BY SUM(unit_sales)/@qtd_dias DESC 
+```
+<img width="307" height="343" alt="image" src="https://github.com/user-attachments/assets/db67d2a2-05ac-4891-aa6d-f34041017464" />
+<img width="410" height="340" alt="image" src="https://github.com/user-attachments/assets/01eb0542-090d-4fa6-b80e-ca34090bbc36" />
+
+
+Para essa análise foi necessário declarar a variável @qtd_dias de forma a obter a quantidade de dias que possuem dentro do DATASET para conseguir obter a média de vendas durante todo o período, é importante ressaltar que a análise não considerou o tempo de atividade de uma loja (desconsiderar lojas com funcionamento menor do que o período) e nem dos produtos. 
+Essa análise de demanda por produtos é interessante pois podemos analisar quais são os produtos com maior vendas por dia o que pode ser aplicado para previsibilidade de vendas e de estoque, o que é extremamente interessante para as lojas.
+
+
+###  Promoções aumentam as vendas?
+``` sql
+DECLARE @qtd_vendida FLOAT
+SET @qtd_vendida = (
+SELECT 
+   SUM(unit_sales)
+FROM vwVENDAS);
+
+SELECT
+    onpromotion AS Promoção,
+    ROUND(SUM(
+              CASE
+                WHEN unit_sales > 0 THEN unit_sales
+                ELSE 0
+            END),2) AS Quantidade_vendida,
+    ROUND(AVG(
+              CASE
+                WHEN unit_sales > 0 THEN unit_sales
+                ELSE NULL
+            END),2) AS Média_vendas,
+    FORMAT((SUM(
+              CASE
+                WHEN unit_sales > 0 THEN unit_sales
+                ELSE 0
+            END)/@qtd_vendida),'P') AS Porcentagem_vendida
+FROM vwVENDAS
+GROUP BY onpromotion
+```
+
 7. Quais meses/anos apresentam maior quantidade de vendas ?
 8. Qual a quantidade média vendida em cada dia da semana ?
