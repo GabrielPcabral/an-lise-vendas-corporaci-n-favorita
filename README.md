@@ -215,24 +215,56 @@ FROM vwVENDAS);
 
 SELECT
     onpromotion AS Promoção,
-    ROUND(SUM(
-              CASE
-                WHEN unit_sales > 0 THEN unit_sales
-                ELSE 0
-            END),2) AS Quantidade_vendida,
-    ROUND(AVG(
-              CASE
-                WHEN unit_sales > 0 THEN unit_sales
-                ELSE NULL
-            END),2) AS Média_vendas,
-    FORMAT((SUM(
-              CASE
-                WHEN unit_sales > 0 THEN unit_sales
-                ELSE 0
-            END)/@qtd_vendida),'P') AS Porcentagem_vendida
+    ROUND(SUM( unit_sales),2) AS 'Quantidade vendida',
+    ROUND(AVG(unit_sales),2) AS 'Média vendas',
+    FORMAT((SUM(unit_sales)/@qtd_vendida),'P') AS 'Porcentagem vendida',
+    COUNT(*) AS 'Quantidade de registros'
 FROM vwVENDAS
 GROUP BY onpromotion
 ```
+<img width="685" height="102" alt="image" src="https://github.com/user-attachments/assets/d8e2bf20-651a-453f-a75b-b6c731cf7766" />
 
-7. Quais meses/anos apresentam maior quantidade de vendas ?
+Como podemos analisar nos resultados obtidos, a maior parte dos registros apresentados ocorreram sem promoção ou sem registro, por esse motivo temos que a quantidade vendida também é maior do que quando ocorreu em promoção. Porém como podemos analisar a média de vendas, temos um aumento de aproximadamente 66% na quantidade vendida quando em promoção. Para investigar melhor o efeito das promoções, análises posteriores podem comparar o mesmo produto em períodos com e sem promoção.
+
+##Quais meses/anos apresentam maior quantidade de vendas ?
+``` sql
+SELECT
+    YEAR(date) AS Ano,
+    MONTH(date) AS Mês,
+    ROUND(    
+        SUM(
+            CASE
+                WHEN unit_sales > 0 THEN unit_sales
+                ELSE 0
+            END),2) AS 'Quantidade vendida'
+FROM vwVENDAS
+GROUP BY YEAR(date), MONTH(date)
+ORDER BY [Quantidade vendida] DESC
+```
+<img width="277" height="342" alt="image" src="https://github.com/user-attachments/assets/03dd26b2-560f-4f0a-ba81-3841ad4a96e0" />
+
+
 8. Qual a quantidade média vendida em cada dia da semana ?
+
+``` sql
+WITH vendas_dias AS (
+SELECT
+    date,
+    DATENAME(WEEKDAY,date) AS dia_semana,
+    SUM(unit_sales) AS Total_vendido
+FROM 
+    train
+GROUP BY date , DATENAME(WEEKDAY,date))
+
+SELECT 
+    DATENAME(WEEKDAY, date) AS 'Dia semana',
+    ROUND(AVG(Total_vendido),2) AS 'Média de vendas'
+FROM
+    vendas_dias
+GROUP BY
+    DATENAME(WEEKDAY, date)
+ORDER BY [Média de vendas] DESC
+```
+
+<img width="280" height="196" alt="image" src="https://github.com/user-attachments/assets/70b14463-1d8b-4118-934d-a5cfea2eb111" />
+
